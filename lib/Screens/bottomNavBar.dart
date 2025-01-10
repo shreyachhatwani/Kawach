@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:background_sms/background_sms.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
 import 'fake_call.dart';
@@ -29,8 +32,13 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   void initState() {
     super.initState();
     _checkAndRequestPermissions();
+    _startShakeDetection();
   }
-
+  @override
+  void dispose() {
+    _stopShakeDetection();
+    super.dispose();
+  }
   Future<void> _checkAndRequestPermissions() async {
     var status = await Permission.sms.status;
     if (!status.isGranted) {
@@ -208,4 +216,28 @@ class _BottomnavbarState extends State<Bottomnavbar> {
       print('Failed');
     }
   }
+
+
+  bool _isShakeDetected = false;
+  StreamSubscription? _accelerometerSubscription;
+
+  void _startShakeDetection() {
+    const double shakeThreshold = 15.0;
+
+    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+      double acceleration = event.x * event.x + event.y * event.y + event.z * event.z;
+      if (acceleration > shakeThreshold && !_isShakeDetected) {
+        _isShakeDetected = true;
+        _sendSOS();  // Call your SOS sending method
+      }
+    });
+  }
+
+  void _stopShakeDetection() {
+    _accelerometerSubscription?.cancel();
+    _isShakeDetected = false;
+  }
+
 }
+
+
