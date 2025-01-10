@@ -252,7 +252,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   StreamSubscription? _accelerometerSubscription;
 
   void _startShakeDetection() {
-    const double shakeThreshold = 15.0;
+    const double shakeThreshold = 5.0;
 
     _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
       double acceleration = event.x * event.x + event.y * event.y + event.z * event.z;
