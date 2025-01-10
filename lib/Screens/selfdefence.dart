@@ -9,13 +9,13 @@ import 'guide_main.dart';
 class SelfDefencePage extends StatelessWidget {
   final List<Map<String, String>> accordionData = [
     {"title": "Basic Self Defence", "videoUrl": "KVpxP3ZZtAc"},
-    {"title": "Advanced Techniques", "videoUrl": "KVpxP3ZZtAc"},
-    {"title": "Safety Tips for Women", "videoUrl": "KVpxP3ZZtAc"},
-    {"title": "Self Defence Tools", "videoUrl": "KVpxP3ZZtAc"},
+    {"title": "Advanced Techniques", "videoUrl": "q1pBBRi3XF8"},
+    {"title": "Safety Tips for Women", "videoUrl": "lEPLBFzneio"},
+    {"title": "Self Defence Tools", "videoUrl": "7QkMQfpaZPc"},
   ];
 
   final String academyLocationUrl = "https://maps.app.goo.gl/BjWuWv7yRgtfW1zf7";
-  final String wsdcWebsiteUrl = "https://www.womenssdc.com/"; // Replace with actual WSDC website URL
+  final String wsdcWebsiteUrl = "https://www.womenssdc.com"; // Replace with actual WSDC website URL
 
   @override
   Widget build(BuildContext context) {
