@@ -6,6 +6,7 @@ import 'package:test_rait_new/Screens/homePage.dart';
 import 'emergencycontacts.dart';
 import 'fake_call.dart';
 import 'generalsafety.dart';
+import 'kawachBot.dart';
 import 'selfdefence.dart';  // Add the import for SelfDefencePage
 
 class GuidePage extends StatelessWidget {
@@ -60,7 +61,7 @@ class GuidePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _buildTab(context, 'Emergency Contacts', 'assets/emergency_contact.png', navigateTo: Econtactpage()),
-                  _buildTab(context, 'Talk with Kawach Bot', 'assets/bot.png'),
+                  _buildTab(context, 'Talk with Kawach Bot', 'assets/bot.png',navigateTo: SafetySupport()),
                 ],
               ),
             ),

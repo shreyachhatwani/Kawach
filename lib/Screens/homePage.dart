@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:share_plus/share_plus.dart'; // Add this package to pubspec.yaml
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -24,33 +25,39 @@ class _HomepageState extends State<Homepage> {
   }
 
   void _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return Future.error('Location services are disabled.');
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied.');
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return Future.error('Location services are disabled.');
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied.');
-    }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return Future.error('Location permissions are denied.');
+        }
+      }
 
-    Geolocator.getPositionStream().listen((Position position) {
-      setState(() {
-        _currentPosition = position;
-        _checkThreateningRegion();
+      if (permission == LocationPermission.deniedForever) {
+        return Future.error('Location permissions are permanently denied.');
+      }
+
+      Geolocator.getPositionStream().listen((Position position) {
+        setState(() {
+          _currentPosition = position;
+          _checkThreateningRegion();
+        });
       });
-    });
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
   }
 
   void _checkThreateningRegion() {
+    if (_currentPosition == null) return;
+
     for (var region in _threateningRegions) {
       final distance = Geolocator.distanceBetween(
         _currentPosition!.latitude,
@@ -58,7 +65,8 @@ class _HomepageState extends State<Homepage> {
         region.latitude,
         region.longitude,
       );
-      if (distance < 100) { // within 100 meters
+      if (distance < 100) {
+        // Within 100 meters
         _showAlert();
         break;
       }
@@ -70,14 +78,14 @@ class _HomepageState extends State<Homepage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Safety Alert'),
-          content: Text('You have entered a threatening region!'),
+          title: const Text('Safety Alert'),
+          content: const Text('You have entered a threatening region!'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -85,34 +93,61 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  void _shareLocation() {
+    if (_currentPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location not available. Please wait...')),
+      );
+      return;
+    }
+    final String locationMessage =
+        'Here is my current location: https://www.google.com/maps/search/?api=1&query=${_currentPosition!.latitude},${_currentPosition!.longitude}';
+    Share.share(locationMessage);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Map View'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: _shareLocation,
+            tooltip: 'Share Location',
+          ),
+        ],
+      ),
       body: FlutterMap(
         options: MapOptions(
-          initialZoom: 14,  // Increased initial zoom level
-          maxZoom: 19,
+          initialZoom: 8.0,
+          minZoom: 3.0,
+          maxZoom: 19.0,
           initialCenter: _currentPosition != null
               ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
-              : LatLng(19.2548, 27.68466),
-         
+              : const LatLng(19.2548, 27.68466),
         ),
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'dev.fleaflet.flutter_map.example',
             maxZoom: 19,
-
-
           ),
           MarkerLayer(
             markers: _currentPosition != null
                 ? [
               Marker(
-                point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                point: LatLng(
+                  _currentPosition!.latitude,
+                  _currentPosition!.longitude,
+                ),
                 width: 80,
                 height: 80,
-                child: Icon(Icons.directions_walk, color: Colors.blue, size: 45),
+                child: const Icon(
+                  Icons.directions_walk,
+                  color: Colors.blue,
+                  size: 45,
+                ),
               ),
             ]
                 : [],

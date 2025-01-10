@@ -48,8 +48,17 @@ dependencies:
   latlong2: ^0.9.1
   background_sms: ^0.0.1
   sensors_plus: ^6.1.1
+<<<<<<< Updated upstream
   flutter_tts: ^4.2.1
   speech_to_text: ^7.0.0
+=======
+  flutter_markdown: ^0.6.9
+  google_generative_ai: ^0.4.6
+  flutter_tts: ^4.2.0
+  speech_to_text: ^7.0.0
+  share_plus: ^7.0.1
+
+>>>>>>> Stashed changes
 
 
 

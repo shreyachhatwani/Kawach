@@ -155,7 +155,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     return Scaffold(
       appBar: AppBar(
         title: InkWell(
-          onTap: _speechToText.isListening ? _stopListening : _startListening,
+            onTap: _speechToText.isListening ? _stopListening : _startListening,
             child: const Text('Kawach')),
         backgroundColor: Colors.blue,
       ),
@@ -269,5 +269,3 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   }
 
 }
-
-
