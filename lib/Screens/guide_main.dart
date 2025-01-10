@@ -3,7 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:test_rait_new/Screens/homePage.dart';
 
+import 'emergencycontacts.dart';
 import 'fake_call.dart';
+import 'generalsafety.dart';
 import 'selfdefence.dart';  // Add the import for SelfDefencePage
 
 class GuidePage extends StatelessWidget {
@@ -47,7 +49,7 @@ class GuidePage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTab(context, 'General Safety Tips', 'assets/general_safety.png'),
+                  _buildTab(context, 'General Safety Tips', 'assets/general_safety.png',navigateTo: SafetyChecklistPage()),
                   _buildTab(context, 'Learn Self Defence', 'assets/self_defence.png', navigateTo: SelfDefencePage()), // Navigate to SelfDefencePage
                 ],
               ),
@@ -57,7 +59,7 @@ class GuidePage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTab(context, 'Emergency Contacts', 'assets/emergency_contact.png'),
+                  _buildTab(context, 'Emergency Contacts', 'assets/emergency_contact.png', navigateTo: Econtactpage()),
                   _buildTab(context, 'Talk with Kawach Bot', 'assets/bot.png'),
                 ],
               ),

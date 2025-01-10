@@ -1,63 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:permission_handler/permission_handler.dart';
 
 class FakeCallPage extends StatelessWidget {
-  final String callAgentNumber = 'tel:+13238142763';// Replace with your Dialogflow agent number
+  final String callAgentNumber = '13238143699';
 
-  FakeCallPage({Key? key}) : super(key: key);
+  const FakeCallPage({Key? key}) : super(key: key);
 
   Future<void> _launchFakeCall(BuildContext context) async {
-    final Uri callUri = Uri.parse(callAgentNumber);
-    if (await canLaunchUrl(callUri)) {
-      await launchUrl(callUri);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to initiate a fake call.'),
-          backgroundColor: Colors.red,
-        ),
+    final status = await Permission.phone.request();
+    print('Permission status: $status');
+
+    if (!status.isGranted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone permission is required to make calls.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Try direct string URL first
+      final phoneNumber = 'tel:$callAgentNumber';
+      print('Attempting to launch: $phoneNumber');
+
+      // Create the Uri object
+      final Uri launchUri = Uri.parse(phoneNumber);
+      print('URI created: $launchUri');
+
+      // Attempt to launch
+      final bool result = await launchUrl(
+        launchUri,
+        mode: LaunchMode.platformDefault,
       );
+      print('Launch result: $result');
+
+      if (!result) {
+        // Try alternative formatting if first attempt fails
+        final alternativeUri = Uri(
+          scheme: 'tel',
+          path: callAgentNumber,
+        );
+        print('Trying alternative URI: $alternativeUri');
+
+        final bool alternativeResult = await launchUrl(
+          alternativeUri,
+          mode: LaunchMode.platformDefault,
+        );
+
+        if (!alternativeResult) {
+          throw 'Could not launch phone app';
+        }
+      }
+    } catch (e) {
+      print('Launch error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error launching call: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  void _showConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Fake Call'),
-          content: const Text('Do you want to start a fake call?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Press "Call Now" to initiate a fake call.'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                _launchFakeCall(context);
-              },
-              child: const Text('Yes'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
+  // Rest of your code remains the same...
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -70,15 +86,47 @@ class FakeCallPage extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => _showConfirmationDialog(context),
-              child: const Text('Call Now'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
+              child: const Text('Call Now'),
             ),
           ],
         ),
       ),
+    );
+  }
 
+  void _showConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Fake Call'),
+          content: const Text('Do you want to start a fake call?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Press "Call Now" to initiate a fake call.'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _launchFakeCall(context);
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
