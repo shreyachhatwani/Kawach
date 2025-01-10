@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:telephony_sms/telephony_sms.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:background_sms/background_sms.dart';
+import 'package:geolocator/geolocator.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
 import 'fake_call.dart';
 import 'guide_main.dart';
 import 'homePage.dart';
-import 'reportPAge.dart';
 
 class Bottomnavbar extends StatefulWidget {
   const Bottomnavbar({super.key});
@@ -16,7 +16,6 @@ class Bottomnavbar extends StatefulWidget {
 
 class _BottomnavbarState extends State<Bottomnavbar> {
   int _selectedIndex = 0;
-  final _telephonySMS = TelephonySMS();
   bool _isLoading = false;
 
   static List<Widget> _pages = <Widget>[
@@ -39,16 +38,27 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     }
   }
 
-  Future<bool> _requestSMSPermission() async {
-    try {
-      await _telephonySMS.requestPermission();
-      return true;
-    } catch (e) {
-      print('Error requesting SMS permission: $e');
-      // Try using permission_handler as fallback
-      var status = await Permission.sms.request();
-      return status.isGranted;
+  Future<Position> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
     }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permissions are denied.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
   }
 
   Future<void> _sendSOS() async {
@@ -59,9 +69,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     });
 
     try {
-      // First ensure we have permission
-      bool hasPermission = await _requestSMSPermission();
-
+      bool hasPermission = await isPermissionGranted();
       if (!hasPermission) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -72,11 +80,12 @@ class _BottomnavbarState extends State<Bottomnavbar> {
         return;
       }
 
-      // Then send the SOS message
-      await _telephonySMS.sendSMS(
-        phone: "+918879781985",  // Your emergency number
-        message: "SOS! I need help! This is an emergency message.",
-      );
+      Position position = await _getCurrentLocation();
+      String message =
+          "SOS! I need help! This is an emergency message. My location: "
+          "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
+
+      await sendSms('8850990106', message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -87,7 +96,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     } catch (e) {
       print('Error sending SOS: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Failed to send SOS message. Please try again.'),
           backgroundColor: Colors.red,
         ),
@@ -141,7 +150,9 @@ class _BottomnavbarState extends State<Bottomnavbar> {
       body: _pages[_selectedIndex],
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
-        onPressed: _isLoading ? null : _sendSOS,
+        onPressed: () async {
+          await _sendSOS();
+        },
         child: _isLoading
             ? const SizedBox(
           width: 24,
@@ -182,5 +193,19 @@ class _BottomnavbarState extends State<Bottomnavbar> {
         showUnselectedLabels: true,
       ),
     );
+  }
+
+  getPermission() async => await [Permission.sms].request();
+
+  Future<bool> isPermissionGranted() async => await Permission.sms.status.isGranted;
+
+  Future<void> sendSms(String phoneNumber, String message) async {
+    var result = await BackgroundSms.sendMessage(
+        phoneNumber: phoneNumber, message: message);
+    if (result == SmsStatus.sent) {
+      print('Sent');
+    } else {
+      print('Failed');
+    }
   }
 }
