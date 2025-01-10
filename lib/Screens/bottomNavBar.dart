@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:background_sms/background_sms.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
 import 'fake_call.dart';
@@ -20,6 +22,9 @@ class Bottomnavbar extends StatefulWidget {
 class _BottomnavbarState extends State<Bottomnavbar> {
   int _selectedIndex = 0;
   bool _isLoading = false;
+  final FlutterTts _flutterTts = FlutterTts();
+  bool _speechEnabled = false;
+  final SpeechToText _speechToText = SpeechToText();
 
   static List<Widget> _pages = <Widget>[
     Homepage(),
@@ -33,6 +38,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     super.initState();
     _checkAndRequestPermissions();
     _startShakeDetection();
+    initSpeech();
   }
   @override
   void dispose() {
@@ -43,6 +49,28 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     var status = await Permission.sms.status;
     if (!status.isGranted) {
       await Permission.sms.request();
+    }
+  }
+
+  void initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+  }
+
+  void _onSpeechResult(result) {
+    String wordsSpoken = result.recognizedWords.toLowerCase();
+    if (wordsSpoken.contains('help help')) {
+      _sendSOS();
+    } else {
+      _flutterTts.speak("Command not recognized. Please try again.");
     }
   }
 
@@ -126,7 +154,9 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kawach'),
+        title: InkWell(
+          onTap: _speechToText.isListening ? _stopListening : _startListening,
+            child: const Text('Kawach')),
         backgroundColor: Colors.blue,
       ),
       drawer: Drawer(
