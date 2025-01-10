@@ -46,7 +46,7 @@ dependencies:
   firebase_auth: ^5.4.0
   geolocator: ^13.0.2
   latlong2: ^0.9.1
-
+  telephony_sms: ^0.0.4
 
 
 
