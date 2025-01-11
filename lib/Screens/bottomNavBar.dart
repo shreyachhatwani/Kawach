@@ -160,7 +160,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
           "SOS! I need help! This is an emergency message. My location: "
           "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
 
-      await sendSms('8850990106', message);
+      await sendSms('7972627245', message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:background_sms/background_sms.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'bottomNavBar.dart';
-import 'homePage.dart';
-
 
 class DeactivatePage extends StatefulWidget {
   const DeactivatePage({Key? key}) : super(key: key);
@@ -14,6 +13,72 @@ class DeactivatePage extends StatefulWidget {
 class _DeactivatePageState extends State<DeactivatePage> {
   TextEditingController _pinController = TextEditingController();
   bool _isPinCorrect = false;
+  final List<String> _emergencyNumbers = ['+917972627245', '+918879781985'];
+
+  Future<bool> _checkSmsPermission() async {
+    final smsPermission = await Permission.sms.status;
+    if (smsPermission.isGranted) {
+      return true;
+    } else {
+      final status = await Permission.sms.request();
+      return status.isGranted;
+    }
+  }
+
+  Future<void> _sendSafetyMessage() async {
+    bool isPermissionGranted = await _checkSmsPermission();
+    if (!isPermissionGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('SMS permission not granted')),
+      );
+      return;
+    }
+
+    String message = "I am Safe. This was a false alarm.";
+
+    for (String number in _emergencyNumbers) {
+      try {
+        var result = await BackgroundSms.sendMessage(
+          phoneNumber: number,
+          message: message,
+        );
+
+        if (result == SmsStatus.sent) {
+          print("SMS sent successfully to $number");
+        } else {
+          print("Failed to send SMS to $number");
+        }
+      } catch (e) {
+        print("Error sending SMS to $number: $e");
+      }
+    }
+  }
+
+  void _checkPin() async {
+    if (_pinController.text == '1234') {
+      setState(() {
+        _isPinCorrect = true;
+      });
+
+      // Send safety message to both numbers
+      await _sendSafetyMessage();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('SOS Mode deactivated and contacts notified')),
+      );
+
+      // Navigate to bottom navigation bar
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Bottomnavbar()),
+      );
+    } else {
+      setState(() {
+        _isPinCorrect = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +114,23 @@ class _DeactivatePageState extends State<DeactivatePage> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _checkPin,
-              child: const Text('Deactivate SOS'),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _checkPin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Deactivate SOS',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
             ),
             if (!_isPinCorrect)
               const Padding(
@@ -65,22 +144,5 @@ class _DeactivatePageState extends State<DeactivatePage> {
         ),
       ),
     );
-  }
-
-  void _checkPin() {
-    if (_pinController.text == '1234') {
-      setState(() {
-        _isPinCorrect = true;
-      });
-      // Navigate back to MapPage() once the correct pin is entered
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) =>  Bottomnavbar()),
-      );
-    } else {
-      setState(() {
-        _isPinCorrect = false;
-      });
-    }
   }
 }
