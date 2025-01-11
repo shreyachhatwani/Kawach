@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'bottomNavBar.dart';
 import 'homePage.dart';
 
 
@@ -74,7 +75,7 @@ class _DeactivatePageState extends State<DeactivatePage> {
       // Navigate back to MapPage() once the correct pin is entered
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Homepage()),
+        MaterialPageRoute(builder: (context) =>  Bottomnavbar()),
       );
     } else {
       setState(() {
