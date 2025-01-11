@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:background_sms/background_sms.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_to_text.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
 import 'fake_call.dart';
@@ -21,6 +25,12 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   int _selectedIndex = 0;
   bool _isLoading = false;
   bool _shakeDetectionActive = false; // Prevents automatic SOS on app start
+  // Speech recognition variables
+  final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
+  bool _speechEnabled = false;
+  String _wordsSpoken = "";
+
 
   static List<Widget> _pages = <Widget>[
     Homepage(),
@@ -34,11 +44,65 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     super.initState();
     _checkAndRequestPermissions();
     _startShakeDetection();
+    initSpeech();
+  }
+// Initialize speech recognition
+  void initSpeech() async {
+    _speechEnabled = await _speechToText.initialize(
+      onError: (error) => print('Speech recognition error: $error'),
+      onStatus: (status) => print('Speech recognition status: $status'),
+    );
+    setState(() {});
+  }
+
+  // Start listening to speech
+  void _startListening() async {
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenFor: Duration(seconds: 30),
+      pauseFor: Duration(seconds: 5),
+      partialResults: true,
+      cancelOnError: true,
+      listenMode: ListenMode.confirmation,
+    );
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Listening...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+
+  // Stop listening to speech
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+// Handle speech recognition results
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _wordsSpoken = result.recognizedWords;
+      print('Words spoken: $_wordsSpoken');
+
+      // Check for help-related keywords
+      if (_wordsSpoken.toLowerCase().contains('help') ||
+          _wordsSpoken.toLowerCase().contains('emergency') ||
+          _wordsSpoken.toLowerCase().contains('danger')) {
+        print('Help keyword detected!');
+        _sendSOS();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _stopListening();
     _stopShakeDetection();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -96,7 +160,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
           "SOS! I need help! This is an emergency message. My location: "
           "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
 
-      await sendSms('7972627245', message);
+      await sendSms('8850990106', message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -135,8 +199,44 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kawach'),
+        title: Row(
+          children: [
+            Text('Kawach'),
+            SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                if (_speechToText.isNotListening) {
+                  _startListening();
+                } else {
+                  _stopListening();
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.all(8),
+                child: Icon(
+                  _speechToText.isListening ? Icons.mic : Icons.mic_none,
+                  color: _speechToText.isListening ? Colors.red : Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Colors.blue,
+        actions: [
+          if (_speechToText.isListening)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Center(
+                child: Text(
+                  'Listening...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
