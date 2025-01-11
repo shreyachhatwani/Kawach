@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:test_rait_new/Screens/homePage.dart';
+import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
 import 'emergencycontacts.dart';
 import 'fake_call.dart';
 import 'generalsafety.dart';
@@ -9,6 +9,17 @@ import 'kawachBot.dart';
 import 'selfdefence.dart';
 
 class GuidePage extends StatelessWidget {
+  GuidePage({super.key});
+
+  // Sample data for the heatmap (fake data points for danger-prone areas)
+  final List<WeightedLatLng> dangerLocations = [
+    WeightedLatLng(LatLng(19.0760, 72.8777), 1.0),  // Mumbai central
+    WeightedLatLng(LatLng(19.1050, 72.8347), 0.8),  // Bandra
+    WeightedLatLng(LatLng(19.0760, 72.9125), 0.9),  // Andheri
+    WeightedLatLng(LatLng(19.0445, 72.8517), 0.7),  // Malad
+    WeightedLatLng(LatLng(19.2183, 72.9780), 0.6),  // Navi Mumbai
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,18 +27,36 @@ class GuidePage extends StatelessWidget {
         child: Column(
           children: [
             // Map widget
-            Container(
+            SizedBox(
               height: 250,
               child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(19.0760, 72.8777),
-                  initialZoom: 13.0,
-                  maxZoom: 18.0,
-                ),
+                options: const MapOptions(),
                 children: [
                   TileLayer(
                     urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    subdomains: ['a', 'b', 'c'],
+                    subdomains: const ['a', 'b', 'c'],
+                  ),
+                  HeatMapLayer(
+                    heatMapDataSource: InMemoryHeatMapDataSource(
+                      data: dangerLocations,
+                    ),
+                    heatMapOptions: HeatMapOptions(
+                      gradient: {
+                        0.25: MaterialColor(0xFF4CAF50, const <int, Color>{
+                          500: Colors.green,
+                        }),
+                        0.5: MaterialColor(0xFFFFEB3B, const <int, Color>{
+                          500: Colors.yellow,
+                        }),
+                        0.75: MaterialColor(0xFFFF9800, const <int, Color>{
+                          500: Colors.orange,
+                        }),
+                        1.0: MaterialColor(0xFFF44336, const <int, Color>{
+                          500: Colors.red,
+                        }),
+                      },
+                      radius: 20,
+                    ),
                   ),
                 ],
               ),
@@ -35,8 +64,8 @@ class GuidePage extends StatelessWidget {
 
             // Legend
             Container(
-              margin: EdgeInsets.all(16.0),
-              padding: EdgeInsets.all(8.0),
+              margin: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8.0),
@@ -97,10 +126,10 @@ class GuidePage extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
-          style: TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 12),
         ),
       ],
     );

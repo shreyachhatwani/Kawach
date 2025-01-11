@@ -53,6 +53,7 @@ dependencies:
   flutter_tts: ^4.2.0
   speech_to_text: ^7.0.0
   share_plus: ^7.0.1
+  flutter_map_heatmap: ^0.0.8
 
 
 
