@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart'; // Added geolocator package
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart' as launcher;
 
@@ -41,7 +42,7 @@ class _EcontactpageState extends State<Econtactpage> {
     'Santacruz': LatLng(19.0798, 72.8397),
     'Sion': LatLng(19.0380, 72.8690),
     'Versova': LatLng(19.1351, 72.8146),
-    'Vikhroli': LatLng(19.1174, 72.9277),
+    'Nerul': LatLng(19.1174, 72.9277),
     'Vile Parle': LatLng(19.0969, 72.8497),
     'Worli': LatLng(19.0179, 72.8346),
   };
@@ -87,9 +88,51 @@ class _EcontactpageState extends State<Econtactpage> {
     'Malad': {'Police': '022-28893333', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
     'Powai': {'Police': '022-25703333', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
     'Santacruz': {'Police': '022-26491233', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
-    'Vikhroli': {'Police': '022-25742828', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
+    'Nerul': {'Police': '022-25742828', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
     'Worli': {'Police': '022-24924444', 'Ambulance': '108', 'Fire Brigade': '101', 'Women Helpline': '1091'},
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
+  }
+
+  // Function to get the user's current location
+  Future<void> _getUserLocation() async {
+    // Check for location permissions
+    PermissionStatus permission = await Permission.location.request();
+
+    if (permission.isGranted) {
+      // Get the current location
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      LatLng userLocation = LatLng(position.latitude, position.longitude);
+
+      // Find the closest suburb based on coordinates (this can be done via distance calculation or using pre-defined ranges)
+      String nearestSuburb = _getNearestSuburb(userLocation);
+
+      setState(() {
+        selectedSuburb = nearestSuburb;
+        selectedLocation = userLocation;
+      });
+    }
+  }
+
+  // Function to get the nearest suburb based on coordinates (simple distance check)
+  String _getNearestSuburb(LatLng userLocation) {
+    double minDistance = double.infinity;
+    String nearestSuburb = '';
+
+    suburbCoordinates.forEach((suburb, coordinates) {
+      double distance = Geolocator.distanceBetween(userLocation.latitude, userLocation.longitude, coordinates.latitude, coordinates.longitude);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestSuburb = suburb;
+      }
+    });
+
+    return nearestSuburb;
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
@@ -111,7 +154,7 @@ class _EcontactpageState extends State<Econtactpage> {
             actions: <Widget>[
               TextButton(
                 child: const Text('OK'),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           );
@@ -123,135 +166,35 @@ class _EcontactpageState extends State<Econtactpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Emergency Contacts'),
+      ),
       body: Column(
         children: [
-          // Suburb Selection Dropdown
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Colors.grey[100],
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: selectedSuburb,
-              items: suburbCoordinates.keys.map((String suburb) {
-                return DropdownMenuItem<String>(
-                  value: suburb,
-                  child: Text(suburb),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Text(
+              'Emergency Contacts for $selectedSuburb',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: emergencyContacts[selectedSuburb]!.entries.map((entry) {
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  child: ListTile(
+                    leading: const Icon(Icons.phone, color: Colors.blue),
+                    title: Text(entry.key),
+                    subtitle: Text(entry.value),
+                    onTap: () => _makePhoneCall(entry.value),
+                  ),
                 );
               }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  selectedSuburb = newValue!;
-                  selectedLocation = suburbCoordinates[newValue]!;
-                });
-              },
-            ),
-          ),
-
-          // Map View
-          Expanded(
-            flex: 2,
-            child: FlutterMap(
-              options: MapOptions(
-                initialZoom: 14,
-                maxZoom: 18,
-                initialCenter: selectedLocation,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: selectedLocation,
-                      width: 80,
-                      height: 80,
-                      child: Icon(Icons.location_on_rounded, color: Colors.red, size: 45),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Emergency Contacts List
-          Expanded(
-            flex: 1,
-            child: Container(
-              color: Colors.grey[200],
-              child: ListView.builder(
-                itemCount: emergencyContacts[selectedSuburb]?.length ?? 0,
-                itemBuilder: (context, index) {
-                  String contactType = emergencyContacts[selectedSuburb]!.keys.elementAt(index);
-                  String phoneNumber = emergencyContacts[selectedSuburb]![contactType]!;
-
-                  return Card(
-                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: ListTile(
-                      leading: Icon(
-                        _getIconForContactType(contactType),
-                        color: _getColorForContactType(contactType),
-                      ),
-                      title: Text(contactType),
-                      subtitle: Text(phoneNumber),
-                      trailing: ElevatedButton.icon(
-                        icon: Icon(Icons.phone),
-                        label: Text('Call'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _getColorForContactType(contactType),
-                        ),
-                        onPressed: () => _makePhoneCall(phoneNumber),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  IconData _getIconForContactType(String contactType) {
-    switch (contactType.toLowerCase()) {
-      case 'police':
-      case 'police control room':
-        return Icons.local_police;
-      case 'ambulance':
-        return Icons.local_hospital;
-      case 'women helpline':
-        return Icons.woman;
-      case 'fire brigade':
-        return Icons.local_fire_department;
-      case 'municipal ward office':
-      case 'municipal corporation':
-        return Icons.apartment;
-      case 'railway police':
-        return Icons.train;
-      default:
-        return Icons.phone;
-    }
-  }
-
-  Color _getColorForContactType(String contactType) {
-    switch (contactType.toLowerCase()) {
-      case 'police':
-      case 'police control room':
-      case 'railway police':
-        return Colors.blue;
-      case 'ambulance':
-        return Colors.red;
-      case 'women helpline':
-        return Colors.purple;
-      case 'fire brigade':
-        return Colors.orange;
-      case 'municipal ward office':
-      case 'municipal corporation':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
   }
 }
