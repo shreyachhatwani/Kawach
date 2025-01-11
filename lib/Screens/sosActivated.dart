@@ -8,12 +8,6 @@ class SOSActivatedPage extends StatelessWidget {
 
   final String emergencyNumber = '+918879781985'; // For now, use a random number
 
-  // Future<void> _sendSOSMessage() async {
-  //   final Telephony telephony = Telephony.instance;
-  //   String message = 'SOS! I need help!';
-  //   // For now, you can send a generic SOS message.
-  //   await telephony.sendSms(to: emergencyNumber, message: message);
-  // }
 
   @override
   Widget build(BuildContext context) {
