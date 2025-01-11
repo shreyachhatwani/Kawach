@@ -1,17 +1,15 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:background_sms/background_sms.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
 import 'fake_call.dart';
 import 'guide_main.dart';
 import 'homePage.dart';
+import 'sosActivated.dart';
 
 class Bottomnavbar extends StatefulWidget {
   const Bottomnavbar({super.key});
@@ -22,9 +20,7 @@ class Bottomnavbar extends StatefulWidget {
 class _BottomnavbarState extends State<Bottomnavbar> {
   int _selectedIndex = 0;
   bool _isLoading = false;
-  final FlutterTts _flutterTts = FlutterTts();
-  bool _speechEnabled = false;
-  final SpeechToText _speechToText = SpeechToText();
+  bool _shakeDetectionActive = false; // Prevents automatic SOS on app start
 
   static List<Widget> _pages = <Widget>[
     Homepage(),
@@ -38,39 +34,18 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     super.initState();
     _checkAndRequestPermissions();
     _startShakeDetection();
-    initSpeech();
   }
+
   @override
   void dispose() {
     _stopShakeDetection();
     super.dispose();
   }
+
   Future<void> _checkAndRequestPermissions() async {
     var status = await Permission.sms.status;
     if (!status.isGranted) {
       await Permission.sms.request();
-    }
-  }
-
-  void initSpeech() async {
-    _speechEnabled = await _speechToText.initialize();
-    setState(() {});
-  }
-  void _startListening() async {
-    await _speechToText.listen(onResult: _onSpeechResult);
-    setState(() {});
-  }
-
-  void _stopListening() async {
-    await _speechToText.stop();
-  }
-
-  void _onSpeechResult(result) {
-    String wordsSpoken = result.recognizedWords.toLowerCase();
-    if (wordsSpoken.contains('help help')) {
-      _sendSOS();
-    } else {
-      _flutterTts.speak("Command not recognized. Please try again.");
     }
   }
 
@@ -121,13 +96,19 @@ class _BottomnavbarState extends State<Bottomnavbar> {
           "SOS! I need help! This is an emergency message. My location: "
           "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
 
-      await sendSms('8850990106', message);
+      await sendSms('7972627245', message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('SOS message sent successfully!'),
           backgroundColor: Colors.green,
         ),
+      );
+
+      // Navigate to SOS Page after sending the message
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SOSActivatedPage()), // Replace with SOS page
       );
     } catch (e) {
       print('Error sending SOS: $e');
@@ -154,9 +135,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: InkWell(
-            onTap: _speechToText.isListening ? _stopListening : _startListening,
-            child: const Text('Kawach')),
+        title: const Text('Kawach'),
         backgroundColor: Colors.blue,
       ),
       drawer: Drawer(
@@ -247,8 +226,6 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     }
   }
 
-
-  bool _isShakeDetected = false;
   StreamSubscription? _accelerometerSubscription;
 
   void _startShakeDetection() {
@@ -256,16 +233,13 @@ class _BottomnavbarState extends State<Bottomnavbar> {
 
     _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
       double acceleration = event.x * event.x + event.y * event.y + event.z * event.z;
-      if (acceleration > shakeThreshold && !_isShakeDetected) {
-        _isShakeDetected = true;
-        _sendSOS();  // Call your SOS sending method
+      if (acceleration > shakeThreshold && _shakeDetectionActive) {
+        _sendSOS();
       }
     });
   }
 
   void _stopShakeDetection() {
     _accelerometerSubscription?.cancel();
-    _isShakeDetected = false;
   }
-
 }
