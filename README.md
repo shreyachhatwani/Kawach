@@ -68,11 +68,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [https://github.com/hahaanisha]
 
-## Contact
-
-- Email: contact@kawach.org
-- Website: https://kawach.org
-- Twitter: [@KawachApp](https://twitter.com/KawachApp)
 
 [logo]: /path/to/logo.png
 [ss1]: /path/to/screenshot1.png
