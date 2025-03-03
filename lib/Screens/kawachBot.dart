@@ -19,7 +19,7 @@ class _SafetySupportState extends State<SafetySupport> {
   bool _speechEnabled = false;
   String _wordsSpoken = "";
   String _modelResponse = "";
-  final apikey = 'AIzaSyCqdYSJ30e09pBekiSQyYg8lFXEzp-b37U'; // Replace with your Gemini API key
+  final apikey = 'AIzaSyBC1V1ERSRe7sXp-dDtysFu8EukQ055P-4'; // Replace with your Gemini API key
   Position? _currentPosition;
   String _currentAddress = "";
 
@@ -126,7 +126,7 @@ class _SafetySupportState extends State<SafetySupport> {
   }
 
   Future<void> talkWithGemini() async {
-    final model = GenerativeModel(model: 'gemini-pro', apiKey: apikey);
+    final model = GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: apikey);
 
     final prompt = '''
     You are Kawach, a women's safety assistant. Provide immediate, helpful safety advice for the following situation.
