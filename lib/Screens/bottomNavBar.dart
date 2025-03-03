@@ -10,6 +10,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:speech_to_text/speech_to_text.dart';
 import '../color/colors.dart';
 import 'ChatPage.dart';
+import 'add_contacts.dart';
 import 'fake_call.dart';
 import 'guide_main.dart';
 import 'homePage.dart';
@@ -38,6 +39,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
     ChatPage(),
     GuidePage(),
   ];
+
 
   @override
   void initState() {
@@ -160,7 +162,7 @@ class _BottomnavbarState extends State<Bottomnavbar> {
           "SOS! I need help! This is an emergency message. My location: "
           "https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}";
 
-      await sendSms('7972627245', message);
+      await sendSms('8850990106', message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -199,71 +201,30 @@ class _BottomnavbarState extends State<Bottomnavbar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Text('Kawach'),
-            SizedBox(width: 8),
-            InkWell(
-              onTap: () {
-                if (_speechToText.isNotListening) {
-                  _startListening();
-                } else {
-                  _stopListening();
-                }
-              },
-              child: Container(
-                padding: EdgeInsets.all(8),
-                child: Icon(
-                  _speechToText.isListening ? Icons.mic : Icons.mic_none,
-                  color: _speechToText.isListening ? Colors.red : Colors.white,
-                ),
-              ),
+        automaticallyImplyLeading: false, // This removes the back arrow
+        title: Center(
+          child: Text(
+            'Kawach',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-          ],
+          ),
         ),
         backgroundColor: Colors.blue,
         actions: [
-          if (_speechToText.isListening)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Center(
-                child: Text(
-                  'Listening...',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
+          IconButton(
+            icon: Icon(Icons.contacts, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddContactsPage(userId: '',)),
+              );
+            },
+          ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Homepage()),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+
       body: _pages[_selectedIndex],
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,

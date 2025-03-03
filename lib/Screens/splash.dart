@@ -33,7 +33,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Image.asset('assets/splash.png', width: 400, height: 400), // Replace with your image
+            Image.asset('assets/splash-sakhi.png', width: 400, height: 400), // Replace with your image
             SizedBox(height: 20),
           ],
         ),

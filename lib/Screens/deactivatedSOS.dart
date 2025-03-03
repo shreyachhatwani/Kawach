@@ -13,7 +13,7 @@ class DeactivatePage extends StatefulWidget {
 class _DeactivatePageState extends State<DeactivatePage> {
   TextEditingController _pinController = TextEditingController();
   bool _isPinCorrect = false;
-  final List<String> _emergencyNumbers = ['+917972627245', '+918879781985'];
+  final List<String> _emergencyNumbers = ['+918850990106'];
 
   Future<bool> _checkSmsPermission() async {
     final smsPermission = await Permission.sms.status;
