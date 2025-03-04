@@ -116,7 +116,7 @@ class ApiKeyWidget extends StatelessWidget {
 class ChatWidget extends StatefulWidget {
   const ChatWidget({ required this.wordsSpoken, super.key});
 
-  final String apiKey='AIzaSyCqdYSJ30e09pBekiSQyYg8lFXEzp-b37U';
+  final String apiKey='AIzaSyBYxORhi0_p20ZgD1MgROTRUgi3yOkO01Y';
 
   final dynamic wordsSpoken;
 
