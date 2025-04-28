@@ -65,8 +65,9 @@ class Config {
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 ## Developed By
+- [Tejas Gadge ](https://github.com/tejasgadge2504)
+- [Anisha Shankar](https://github.com/hahaanisha)
 
-[https://github.com/hahaanisha]
 
 
 [logo]: /path/to/logo.png
